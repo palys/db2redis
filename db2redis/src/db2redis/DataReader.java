@@ -31,6 +31,10 @@ public class DataReader {
 	
 	private Map<String, ForumUser> users;
 	
+	private List<String> content;
+	
+	private List<String> details;
+	
 	private static final String TASK_RESULT = "task_result";
 	
 	private static final String DATE = "date";
@@ -49,10 +53,14 @@ public class DataReader {
 	
 	private static final String NAME = "name";
 	
+	int k = 0;
+	
 	public DataReader() {
 		threads= new HashMap<String, ForumThread>();
 		posts = new ArrayList<ForumPost>();
 		users = new HashMap<String, ForumUser>();
+		content = new ArrayList<String>();
+		details = new ArrayList<String>();
 	}
 	
 	private void clear() {
@@ -84,6 +92,7 @@ public class DataReader {
 				user.setCity("");
 			}
 		} else {
+			String[] csplited = data.split("Skąd: ");
 			user.setCity("");
 		}
 		
@@ -106,14 +115,13 @@ public class DataReader {
 		
 		db2redis.Date date = null;
 		
-		if (dateArray.length > 3) {
+		if (dateArray.length > 2) {
 			date = new db2redis.Date(dateArray[0], dateArray[1], dateArray[2]);
 		} else if(dateArray[0].equals("Dzisiaj")) {
 			date = new db2redis.Date("10", "04", "2014");
 		} else if (dateArray[0].equals("Wczoraj")) {
 			date = new db2redis.Date("09", "04", "2014");
 		}
-		
 		post.setDate(date);
 	}
 	
@@ -123,6 +131,9 @@ public class DataReader {
 		ForumThread thread = new ForumThread();
 		ForumUser user = new ForumUser();
 		
+		String content = "";
+		String details = "";
+		
 		for (int i = 0; i < rules.getLength(); i++) {
 			
 			Node node = rules.item(i);
@@ -131,27 +142,38 @@ public class DataReader {
 			switch(element.getAttribute(NAME)) {
 			
 				case(THREAD_TITLE):
-					thread.setTitle(element.getTextContent());
-					post.setThread(element.getTextContent());
+					String title = element.getTextContent().replaceFirst("Temat: ", "").replaceAll("(/n|/r)+", "");
+					thread.setTitle(title);
+					post.setThread(title);
 					break;
 				case(USER_LOGIN):
-					user.setLogin(element.getTextContent());
-					post.setUser(element.getTextContent());
+					String login = element.getTextContent().replaceAll("\\s+","");
+					user.setLogin(login);
+					post.setUser(login);
 					break;
 				case(POST_CONTENT):
 					post.setContent(element.getTextContent());
+					content = element.getTextContent();
 					break;
 				case(USER_DATA):
 					getUserData(user, element.getTextContent());
 					break;
 				case(POST_DETAILS):
 					getPostData(post, element.getTextContent());
+					details = element.getTextContent();
 					break;
 			}
 		}
 		
+		if (this.content.contains(content) && this.details.contains(details)) {
+			//return;
+		}
+		
+		this.content.add(content);
+		this.details.add(details);
+
 		if (threads.containsKey(thread.getTitle())) {
-			if (threads.get(thread.getTitle()).getDate() == null || threads.get(thread.getTitle()).getDate().compareTo(post.getDate()) < 0) {
+			if (threads.get(thread.getTitle()).getDate() == null || threads.get(thread.getTitle()).getDate().compareTo(post.getDate()) > 0) {
 				threads.get(thread.getTitle()).setDate(post.getDate());
 				threads.get(thread.getTitle()).setUser(user.getLogin());
 			}
@@ -160,6 +182,7 @@ public class DataReader {
 			thread.setUser(user.getLogin());
 			threads.put(thread.getTitle(), thread);
 		}
+		
 		
 		if (!users.containsKey(user.getLogin())) {
 			users.put(user.getLogin(), user);

@@ -1,9 +1,15 @@
 package db2redis;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -18,6 +24,7 @@ public class Main {
 	private Jedis jedis = new Jedis("127.0.0.1", 6379);
 	
 	private void insertUser(ForumUser user) {
+		
 		Long id = jedis.incr("user_id");
 		String userKey = "user:" + id.toString();
 		jedis.hmset(userKey, user.getMap());
@@ -27,7 +34,7 @@ public class Main {
 	private void insertPost(ForumPost post) {
 		
 		Long id = jedis.incr("post_id");
-		String postKey = "post:" + id.toString();
+		String postKey = "post:id:" + id.toString();
 		
 		Map<String, String> map = post.getMap();
 		String userID = jedis.hget("users", post.getUser());
@@ -42,12 +49,18 @@ public class Main {
 		}
 		
 		jedis.hmset(postKey, map);
+		
+		if (post.getDate() != null) {
+			jedis.sadd("posts:year:" + post.getDate().getYear(), id.toString());
+		}
+		
+		jedis.sadd("posts:thread:" + post.getThread(), id.toString());
 	}
 	
 	private void insertThread(ForumThread thread) {
 		
 		Long id = jedis.incr("thread_id");
-		String threadKey = "thread:" + id.toString();
+		String threadKey = "thread:id:" + id.toString();
 		
 		Map<String, String> map = thread.getMap();
 		String userID = jedis.hget("users", thread.getUser());
@@ -58,6 +71,11 @@ public class Main {
 		
 		jedis.hmset(threadKey, map);
 		jedis.hset("threads", thread.getTitle(), id.toString());
+		
+		if (thread.getDate() != null) {
+			jedis.lrem("threads:year:" + thread.getDate().getYear(), 0, thread.getTitle());
+			jedis.lpush("threads:year:" + thread.getDate().getYear(), thread.getTitle());
+		}
 	}
 	
 	private void insertData(Map<String, ForumThread> threads, List<ForumPost> posts, Map<String, ForumUser> users) {
@@ -80,10 +98,262 @@ public class Main {
 		
 		System.out.println("Ładowanie danych zajęło: " + ((end - begin)/1000.) + "s");
 	}
+	
+	private void getMostPopularThreadIn2013() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+		
+		Set<String> ids = jedis.keys("thread:id:*");
+		
+		Map<String, Integer> threads = new HashMap<String, Integer>();
+		
+		for (String threadID : ids) {
+			threads.put(threadID, 0);
+		}
+		
+		Set<String> postIDS = jedis.keys("post:id:*");
+		
+		for (String s : postIDS) {
+			List<String> data = jedis.hmget(s, "thread", "year", "mounth");
+			if (data.get(1).equals("2013") && data.get(2).equals("05")) {
+				threads.put("thread:id:" + data.get(0), threads.get("thread:id:" + data.get(0)) + 1);
+			}
+		}
+		
+		Map.Entry<String, Integer> max = null;
+		
+		for (Map.Entry<String, Integer> e : threads.entrySet()) {
+			if (max == null || e.getValue() > max.getValue()) {
+				max = e;
+			}
+		}
+		
+		String threadTitle = jedis.hmget(max.getKey(), "title").get(0);
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Najbardziej popularny wątek w 2013: " + threadTitle);
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void getNumberOfThreadsIn2013() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+		long n = jedis.llen("threads:year:2013");
+		long end = System.currentTimeMillis();
+		System.out.println("Liczba wątków w 2013: " + n);
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void getAveragePostLength() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+		Set<String> keys = jedis.keys("post:id:*");
+		long sum = 0;
+		
+		for (String s : keys) {
+			sum += jedis.hget(s, "content").length();
+		}
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Średnia długość posta: " + sum/(float)keys.size());
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void getMostActiveUser() {
+		
+		System.out.println();
+		Map<String, Integer> posts = new HashMap<String, Integer>();
+		long begin = System.currentTimeMillis();
+		Set<String> keys = jedis.keys("post:id:*");
+		
+		for (String s : keys) {
+			String user = jedis.hget(s, "user");
+			
+			int prev = 0;
+			
+			if (posts.containsKey(user)) {
+				prev = posts.get(user);
+			}
+			
+			prev++;
+			posts.put(user, prev);
+		}
+		
+		String mostActiveUser = "";
+		int userPosts = 0;
+		
+		for (Map.Entry<String, Integer> e : posts.entrySet()) {
+			if (e.getValue() > userPosts) {
+				userPosts = e.getValue();
+				mostActiveUser = e.getKey();
+			}
+		}
+		
+		String mostActiveUserName = jedis.hmget("user:" + mostActiveUser, "login").get(0);
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Uzytkownik wypowiadajacy się w największej liczbie tematów: " + mostActiveUserName);
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void getMostActiveComentator() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+	
+		Set<String> usersKeys = jedis.keys("user:*");
+		Map<String, Integer> comments = new HashMap<String, Integer>();
+		
+		for (String key : usersKeys) {
+			String login = jedis.hmget(key, "login").get(0);
+			comments.put(login, 0);
+		}
+		
+		Set<String> posts = jedis.keys("post:id:*");
+		
+		for (String s : posts) {
+			String thread = jedis.hmget(s, "thread").get(0);
+			String userID = jedis.hmget("thread:id:" + thread, "user").get(0);
+			String makerLogin = jedis.hmget("user:" + userID, "login").get(0);
+			String postUserID = jedis.hmget(s, "user").get(0);
+			String postUserLogin = jedis.hmget("user:" + postUserID, "login").get(0);
+			
+			if (!makerLogin.equals(postUserLogin)) {
+				comments.put(postUserLogin, comments.get(postUserLogin) + 1);
+			}
+		}
+		
+		Map.Entry<String, Integer> max = null;
+		
+		for (Map.Entry<String, Integer> e : comments.entrySet()) {
+			if (max == null || e.getValue() > max.getValue()) {
+				max = e;
+			}
+		}
+		
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Najczęściej komentujący użytkownik: " + max.getKey());
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void getNumberOfPostsFromKCity() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+		
+		Set<String> keys = jedis.keys("post:id:*");
+		long n = 0;
+		
+		for (String s : keys) {
+			
+			String userID = jedis.hmget(s, "user").get(0);
+			String city = jedis.hmget("user:" + userID, "city").get(0);
+			
+			if (city.startsWith("K") || city.startsWith("k")) {
+				n++;
+			}
+		}
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Liczba postów z miasta na K: " + n);
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void getNumberOfPostsWithFrodo() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+		
+		Set<String> keys = jedis.keys("post:id:*");
+		long n = 0;
+		
+		for (String s : keys) {
+
+			String content = jedis.hmget(s, "content").get(0);
+			
+			if (content != null) {
+				String frodo = "Frodo";
+				
+				int ocuurences = (content.length() - content.replace(frodo, "").length())/frodo.length();
+				
+				n+= ocuurences;
+			}
+		}
+		
+		long end = System.currentTimeMillis();
+		System.out.println("Łaczna liczba występień słowa \"Frodo\": " + n);
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void get35thWord() {
+		
+		System.out.println();
+		long begin = System.currentTimeMillis();
+		
+		Set<String> keys = jedis.keys("post:id:*");
+		
+		Map<String, Integer> words = new HashMap<String, Integer>();
+		
+		for (String s : keys) {
+			
+			String content = jedis.hmget(s, "content").get(0);
+			
+			String[] splited = content.split("\\s+");
+			
+			for (String ss : splited) {
+				int num = 0;
+				
+				if (words.containsKey(ss)) {
+					num = words.get(ss);
+				}
+				num++;
+				
+				words.put(ss, new Integer(num));
+			}
+		}
+		
+		Collection<Integer> values = words.values();
+		
+		ArrayList<Integer> a = new ArrayList<Integer>(values);
+		
+		Collections.sort(a);
+		
+		int _35thValue = a.get(a.size() - 34);
+		
+		String word = "";
+		
+		for (Map.Entry<String, Integer> e : words.entrySet()) {
+			if (e.getValue().equals(_35thValue)) {
+				word = e.getKey();
+				break;
+			}
+		}
+		
+		long end = System.currentTimeMillis();
+		System.out.println("35 slowo: " + word + " " + _35thValue);
+		System.out.println(((end - begin)/1000.) + "s");
+	}
+	
+	private void test() {
+		
+		getNumberOfThreadsIn2013();
+		getMostPopularThreadIn2013();
+		getAveragePostLength();
+		getMostActiveUser();
+		getMostActiveComentator();
+		getNumberOfPostsWithFrodo();
+		getNumberOfPostsFromKCity();
+		get35thWord();
+	}
 
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
 		
 		Main main = new Main();
+		main.jedis.flushDB();
 		
 		long begin = System.currentTimeMillis();
 		main.reader.load("tolkien.xml");
@@ -91,6 +361,8 @@ public class Main {
 		System.out.println("Wczytanie i parsowanie danych zajęło: " + ((end - begin)/1000.) + "s");
 		
 		main.insertData(main.reader.getThreads(), main.reader.getPosts(), main.reader.getUsers());
+		
+		main.test();
 
 		main.jedis.close();
 	}

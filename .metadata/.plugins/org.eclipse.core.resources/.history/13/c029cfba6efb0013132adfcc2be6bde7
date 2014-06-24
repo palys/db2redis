@@ -1,0 +1,222 @@
+package db2redis;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+public class DataReader {
+
+	private Map<String, ForumThread> threads;
+	
+	private List<ForumPost> posts;
+	
+	private Map<String, ForumUser> users;
+	
+	private List<String> content;
+	
+	private List<String> details;
+	
+	private static final String TASK_RESULT = "task_result";
+	
+	private static final String DATE = "date";
+	
+	private static final String RULE = "rule";
+	
+	private static final String THREAD_TITLE = "thread-title";
+	
+	private static final String USER_DATA = "user-data";
+	
+	private static final String USER_LOGIN = "user-login";
+	
+	private static final String POST_CONTENT = "post-content";
+	
+	private static final String POST_DETAILS = "post-details";
+	
+	private static final String NAME = "name";
+	
+	int k = 0;
+	
+	public DataReader() {
+		threads= new HashMap<String, ForumThread>();
+		posts = new ArrayList<ForumPost>();
+		users = new HashMap<String, ForumUser>();
+		content = new ArrayList<String>();
+		details = new ArrayList<String>();
+	}
+	
+	private void clear() {
+		threads.clear();
+		posts.clear();
+		users.clear();
+	}
+	
+	private Document parse(File file) throws ParserConfigurationException, SAXException, IOException {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document document = builder.parse(file);
+		document.getDocumentElement().normalize();
+		
+		return document;
+	}
+	
+	private void getUserData(ForumUser user, String data) {
+		
+		String[] splited = data.split("\n");
+		String dateString = splited[2];
+		
+		if (splited.length > 4 && !splited[4].equals("")) {
+			String cityString = splited[4];
+			String[] splitedCity = cityString.split("Skąd: ");
+			if (splitedCity.length > 1) {
+				user.setCity(splitedCity[1]);
+			} else {
+				user.setCity("");
+			}
+		} else {
+			user.setCity("");
+		}
+		
+		String[] splitedDate = dateString.split(" ");
+		
+		if (splitedDate.length > 3) {
+			String[] dateArray = new String[]{splitedDate[1], splitedDate[2], splitedDate[3]};
+		
+			user.setDate(new db2redis.Date(dateArray[0], dateArray[1], dateArray[2]));
+		} else {
+			user.setDate(null);
+		}
+	}
+	
+	private void getPostData(ForumPost post, String data) {
+		
+		String[] splited = data.split(" ");
+		
+		String[] dateArray = splited[1].split("-");
+		
+		db2redis.Date date = null;
+		
+		if (dateArray.length > 2) {
+			date = new db2redis.Date(dateArray[0], dateArray[1], dateArray[2]);
+		} else if(dateArray[0].equals("Dzisiaj")) {
+			date = new db2redis.Date("10", "04", "2014");
+		} else if (dateArray[0].equals("Wczoraj")) {
+			date = new db2redis.Date("09", "04", "2014");
+		}
+		post.setDate(date);
+	}
+	
+	private void dealWithRules(NodeList rules) {
+		
+		ForumPost post = new ForumPost();
+		ForumThread thread = new ForumThread();
+		ForumUser user = new ForumUser();
+		
+		String content = "";
+		String details = "":
+		
+		for (int i = 0; i < rules.getLength(); i++) {
+			
+			Node node = rules.item(i);
+			Element element = (Element) node;
+			
+			switch(element.getAttribute(NAME)) {
+			
+				case(THREAD_TITLE):
+					thread.setTitle(element.getTextContent());
+					post.setThread(element.getTextContent());
+					break;
+				case(USER_LOGIN):
+					String login = element.getTextContent().replaceAll("\\s+","");
+					user.setLogin(login);
+					post.setUser(login);
+					break;
+				case(POST_CONTENT):
+					post.setContent(element.getTextContent());
+					if (content.contains(element.getTextContent())) {
+						return;
+					} else {
+						content.add(element.getTextContent());
+					}
+					break;
+				case(USER_DATA):
+					getUserData(user, element.getTextContent());
+					break;
+				case(POST_DETAILS):
+					getPostData(post, element.getTextContent());
+					break;
+			}
+		}
+
+		if (threads.containsKey(thread.getTitle())) {
+			if (threads.get(thread.getTitle()).getDate() == null || threads.get(thread.getTitle()).getDate().compareTo(post.getDate()) > 0) {
+				threads.get(thread.getTitle()).setDate(post.getDate());
+				threads.get(thread.getTitle()).setUser(user.getLogin());
+			}
+		} else {
+			thread.setDate(post.getDate());
+			thread.setUser(user.getLogin());
+			threads.put(thread.getTitle(), thread);
+		}
+		
+		
+		if (!users.containsKey(user.getLogin())) {
+			users.put(user.getLogin(), user);
+		}
+		
+		posts.add(post);
+	}
+	
+	public void load(String filePath) throws ParserConfigurationException, SAXException, IOException {
+		clear();
+		File file = new File(filePath);
+		Document document = parse(file);
+		NodeList list = document.getElementsByTagName(TASK_RESULT);
+		
+		for (int i = 0; i < list.getLength(); i++) {
+			
+			Node node = list.item(i);
+			
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
+				
+				Element element = (Element) node;
+				
+				NodeList rules = element.getElementsByTagName(RULE);
+				
+				dealWithRules(rules);
+			}
+		}
+	}
+
+	public Map<String, ForumThread> getThreads() {
+		return threads;
+	}
+
+	public List<ForumPost> getPosts() {
+		return posts;
+	}
+
+	public Map<String, ForumUser> getUsers() {
+		return users;
+	}
+	
+	
+}

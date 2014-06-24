@@ -5,7 +5,24 @@
   <link rel="self" href="https://spring.io/blog.atom" />
   <id>http://spring.io/blog.atom</id>
   <icon>https://spring.io/favicon.ico</icon>
-  <updated>2014-06-23T10:33:00Z</updated>
+  <updated>2014-06-23T19:33:00Z</updated>
+  <entry>
+    <title>Meetup Replay: Using Spring Framework 4.0 and Java 8</title>
+    <link rel="alternate" href="https://spring.io/blog/2014/06/23/meetup-replay-using-spring-framework-4-0-and-java-8" />
+    <category term="news" label="News and Events" />
+    <author>
+      <name>Pieter Humphrey</name>
+    </author>
+    <id>tag:spring.io,2014-06-24:1653</id>
+    <updated>2014-06-23T19:33:00Z</updated>
+    <content type="html">&lt;p&gt;Speaker:  Adib Saikali &lt;/p&gt;
+
+&lt;p&gt;Spring Framework 4.0 ships with Java 8 support that means being that you can start using all the great features of Java 8 right away. This presentation will show examples of how to use Java 8 with Spring Framework 4 in the repository layer, the services layer and the controller layer. For each example we will show a Java 7 and a Java 8 version so that you can easily see the pros and cons of the Java 8 based solution. No previous experience with Java 8 is required or assumed, we will cover some basic features of Java 8 as we go along. About the speaker: Adib is an expert programmer and has a passion for the interface between business and technology.  He launched his career as a coder with a number of entrepreneurial organizations, ranging from small startups to (the then 750-employee) RIM. Adib has trained and mentored thousands of developers at organizations throughout Canada, USA and Europe. His substantial technical knowledge, extensive project experience and ability to look at technical problems from a variety of perspectives allow him to create innovative solutions to 'real world' problems. &lt;/p&gt;
+
+&lt;p&gt;Learn more about Spring Framework:  &lt;a href="http://projects.spring.io/spring-framework"&gt;http://projects.spring.io/spring-framework&lt;/a&gt;&lt;/p&gt;
+
+&lt;iframe width="560" height="315" src="//www.youtube.com/embed/5b5h1G_GLaY" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;</content>
+  </entry>
   <entry>
     <title>Webinar Replay: Spring Integration done Booti-fully</title>
     <link rel="alternate" href="https://spring.io/blog/2014/06/23/webinar-replay-spring-integration-done-booti-fully" />
@@ -1002,25 +1019,6 @@ We are anticipating that several in-depth Spring-Integration sessions will be pr
 &lt;p&gt;Learn more about Spring MVC at &lt;a href="http://projects.spring.io/spring-framework/"&gt;http://projects.spring.io/spring-framework/&lt;/a&gt;&lt;br&gt;&lt;/p&gt;
 
 &lt;iframe width="560" height="315" src="//www.youtube.com/embed/yeslZWHai_A" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;</content>
-  </entry>
-  <entry>
-    <title>SpringOne2GX 2013 Replay: Making Connections with Spring Social</title>
-    <link rel="alternate" href="https://spring.io/blog/2014/06/10/springone2gx-2013-replay-making-connections-with-spring-social" />
-    <category term="news" label="News and Events" />
-    <author>
-      <name>Pieter Humphrey</name>
-    </author>
-    <id>tag:spring.io,2014-06-10:1626</id>
-    <updated>2014-06-10T09:59:00Z</updated>
-    <content type="html">&lt;p&gt;Recorded at SpringOne2GX 2013 in Santa Clara, CA&lt;/p&gt;
-
-&lt;p&gt; Speaker: Craig Walls &lt;/p&gt;
-
-&lt;p&gt;The modern web is rich with APIs that can be consumed by other applications, enabling an integrated experience for the users who hold accounts on the websites that front those APIs. Many of these APIs are secured with OAuth, an authorization specification for securing REST APIs. Spring Social is an extension to the Spring Framework that enables Spring applications to establish connections with those APIs on behalf of their users with little or no need to muck about in the intricacies of OAuth. In this session, we'll explore how Spring Social brings API connectivity to Spring applications. We'll also uncover the newest features of Spring Social that make it easier than ever to link your application's users to the identities they maintain on various sites across the web. &lt;/p&gt;
-
-&lt;p&gt;Learn more about Spring Social at &lt;a href="http://projects.spring.io/spring-social/"&gt;http://projects.spring.io/spring-social/&lt;/a&gt;&lt;br&gt;&lt;/p&gt;
-
-&lt;iframe width="560" height="315" src="//www.youtube.com/embed/AtZBg4lbPBE" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;</content>
   </entry>
 </feed>
 
