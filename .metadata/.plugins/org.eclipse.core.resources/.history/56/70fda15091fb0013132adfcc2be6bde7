@@ -29,8 +29,6 @@ public class Main {
 		String userKey = "user:" + id.toString();
 		jedis.hmset(userKey, user.getMap());
 		jedis.hset("users", user.getLogin(), id.toString());
-		
-		jedis.sadd("users:city:" + user.getCity(), id.toString());
 	}
 	
 	private void insertPost(ForumPost post) {
@@ -61,9 +59,6 @@ public class Main {
 		
 		jedis.srem("threads:users:" + userID, threadID);
 		jedis.sadd("threads:users:" + userID, threadID);
-		
-		jedis.srem("posts:user:" + userID, id.toString());
-		jedis.sadd("posts:user:" + userID, id.toString());
 		
 	}
 	
@@ -254,10 +249,8 @@ private void upgrGMostActiveUser() {
 			}
 		}
 		
-		String login = jedis.hmget(maxLogin, "login").get(0);
-		
 		long end = System.currentTimeMillis();
-		System.out.println("Uzytkownik wypowiadajacy się w największej liczbie tematów: " + login);
+		System.out.println("Uzytkownik wypowiadajacy się w największej liczbie tematów: " + maxLogin);
 		System.out.println(((end - begin)/1000.) + "s");
 	}
 	
@@ -318,24 +311,6 @@ private void upgrGMostActiveUser() {
 			if (city.startsWith("K") || city.startsWith("k")) {
 				n++;
 			}
-		}
-		
-		long end = System.currentTimeMillis();
-		System.out.println("Liczba postów z miasta na K: " + n);
-		System.out.println(((end - begin)/1000.) + "s");
-	}
-	
-private void upgrGetNumberOfPostsFromKCity() {
-		
-		System.out.println();
-		long begin = System.currentTimeMillis();
-		
-		Set<String> keys = jedis.keys("users:city:K*");
-		
-		int n = 0;
-		for (String s : keys) {
-			Set<String> uids = jedis.smembers(s);
-			n += jedis.smembers("posts:user:" + s).size();
 		}
 		
 		long end = System.currentTimeMillis();
@@ -438,7 +413,7 @@ private void upgrGetNumberOfPostsFromKCity() {
 		upgrGMostActiveUser();
 		getMostActiveComentator();
 		getNumberOfPostsWithFrodo();
-		upgrGetNumberOfPostsFromKCity();
+		getNumberOfPostsFromKCity();
 		get35thWord();
 	}
 

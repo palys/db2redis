@@ -29,8 +29,6 @@ public class Main {
 		String userKey = "user:" + id.toString();
 		jedis.hmset(userKey, user.getMap());
 		jedis.hset("users", user.getLogin(), id.toString());
-		
-		jedis.sadd("users:city:" + user.getCity(), id.toString());
 	}
 	
 	private void insertPost(ForumPost post) {
@@ -58,12 +56,6 @@ public class Main {
 		}
 		
 		jedis.sadd("posts:thread:" + post.getThread(), id.toString());
-		
-		jedis.srem("threads:users:" + userID, threadID);
-		jedis.sadd("threads:users:" + userID, threadID);
-		
-		jedis.srem("posts:user:" + userID, id.toString());
-		jedis.sadd("posts:user:" + userID, id.toString());
 		
 	}
 	
@@ -234,33 +226,6 @@ private void upgrGetMostPopularThreadIn2013() {
 		System.out.println(((end - begin)/1000.) + "s");
 	}
 	
-private void upgrGMostActiveUser() {
-		
-		System.out.println();
-		long begin = System.currentTimeMillis();
-		Set<String> logins = jedis.keys("user:*");
-		
-		int maxVal = 0;
-		String maxLogin = "";
-		
-		for (String s : logins) {
-			String id = s.split(":")[1];
-			
-			int val = jedis.smembers("threads:users:" + id).size();
-			
-			if (val > maxVal) {
-				maxVal = val;
-				maxLogin = s;
-			}
-		}
-		
-		String login = jedis.hmget(maxLogin, "login").get(0);
-		
-		long end = System.currentTimeMillis();
-		System.out.println("Uzytkownik wypowiadajacy się w największej liczbie tematów: " + login);
-		System.out.println(((end - begin)/1000.) + "s");
-	}
-	
 	private void getMostActiveComentator() {
 		
 		System.out.println();
@@ -325,24 +290,6 @@ private void upgrGMostActiveUser() {
 		System.out.println(((end - begin)/1000.) + "s");
 	}
 	
-private void upgrGetNumberOfPostsFromKCity() {
-		
-		System.out.println();
-		long begin = System.currentTimeMillis();
-		
-		Set<String> keys = jedis.keys("users:city:K*");
-		
-		int n = 0;
-		for (String s : keys) {
-			Set<String> uids = jedis.smembers(s);
-			n += jedis.smembers("posts:user:" + s).size();
-		}
-		
-		long end = System.currentTimeMillis();
-		System.out.println("Liczba postów z miasta na K: " + n);
-		System.out.println(((end - begin)/1000.) + "s");
-	}
-	
 	private void getNumberOfPostsWithFrodo() {
 		
 		System.out.println();
@@ -358,7 +305,7 @@ private void upgrGetNumberOfPostsFromKCity() {
 			if (content != null) {
 				String frodo = "Frodo";
 				
-				int ocuurences = (content.length() - content.replace(frodo, "").length())/(frodo.length());
+				int ocuurences = (content.length() - content.replace(frodo, "").length())/frodo.length();
 				
 				n+= ocuurences;
 			}
@@ -435,10 +382,10 @@ private void upgrGetNumberOfPostsFromKCity() {
 		getNumberOfThreadsIn2013();
 		upgrGetMostPopularThreadIn2013();
 		getAveragePostLength();
-		upgrGMostActiveUser();
+		getMostActiveUser();
 		getMostActiveComentator();
 		getNumberOfPostsWithFrodo();
-		upgrGetNumberOfPostsFromKCity();
+		getNumberOfPostsFromKCity();
 		get35thWord();
 	}
 

@@ -330,12 +330,10 @@ private void upgrGetNumberOfPostsFromKCity() {
 		System.out.println();
 		long begin = System.currentTimeMillis();
 		
-		Set<String> keys = jedis.keys("users:city:K*");
-		
+		Set<String> usersFromKCity = jedis.smembers("users:city:K*");
 		int n = 0;
-		for (String s : keys) {
-			Set<String> uids = jedis.smembers(s);
-			n += jedis.smembers("posts:user:" + s).size();
+		for (String s : usersFromKCity) {
+			
 		}
 		
 		long end = System.currentTimeMillis();

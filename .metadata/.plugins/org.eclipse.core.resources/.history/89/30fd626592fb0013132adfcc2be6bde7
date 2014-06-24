@@ -63,7 +63,6 @@ public class Main {
 		jedis.sadd("threads:users:" + userID, threadID);
 		
 		jedis.srem("posts:user:" + userID, id.toString());
-		jedis.sadd("posts:user:" + userID, id.toString());
 		
 	}
 	
@@ -330,13 +329,7 @@ private void upgrGetNumberOfPostsFromKCity() {
 		System.out.println();
 		long begin = System.currentTimeMillis();
 		
-		Set<String> keys = jedis.keys("users:city:K*");
-		
-		int n = 0;
-		for (String s : keys) {
-			Set<String> uids = jedis.smembers(s);
-			n += jedis.smembers("posts:user:" + s).size();
-		}
+		Set<String> usersFromKCity = jedis.smembers("users:city:K*");
 		
 		long end = System.currentTimeMillis();
 		System.out.println("Liczba postów z miasta na K: " + n);
