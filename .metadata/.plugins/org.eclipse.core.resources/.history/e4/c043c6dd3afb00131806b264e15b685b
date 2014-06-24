@@ -1,0 +1,56 @@
+package db2redis;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import redis.clients.jedis.Jedis;
+
+public class Main {
+	
+	private DataReader reader = new DataReader();
+	
+	private void insertUser(ForumUser user) {
+		
+	}
+	
+	private void insertPost(ForumPost post) {
+		
+	}
+	
+	private void insertThread(ForumThread thread) {
+		
+	}
+	
+	private void insertData(Map<String, ForumThread> threads, List<ForumPost> posts, Map<String, ForumUser> users) {
+		
+		long time = System.currentTimeMillis();
+		
+		for (ForumUser u : users.values()) {
+			insertUser(u);
+		}
+		
+		for (ForumThread t : threads.values()) {
+			insertThread(t);
+		}
+		
+		for (ForumPost p : posts) {
+			insertPost(p);
+		}
+	}
+
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+		
+		Main main = new Main();
+		
+		main.reader.load("tolkien.xml");
+		
+		main.insertData(main.reader.getThreads(), main.reader.getPosts(), main.reader.getUsers());
+
+	}
+
+}

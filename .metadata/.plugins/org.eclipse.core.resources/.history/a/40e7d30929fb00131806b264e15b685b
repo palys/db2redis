@@ -1,0 +1,57 @@
+package db2redis;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+public class DataReader {
+
+	private List<ForumThread> threads;
+	
+	private List<ForumPost> posts;
+	
+	private List<ForumUser> users;
+	
+	private static final String TASK_RESULT = "task_result";
+	
+	public DataReader() {
+		threads = new ArrayList<>();
+		posts = new ArrayList<ForumPost>();
+		users = new ArrayList<ForumUser>();
+	}
+	
+	private void clear() {
+		threads.clear();
+		posts.clear();
+		users.clear();
+	}
+	
+	private Document parse(File file) throws ParserConfigurationException, SAXException, IOException {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document document = builder.parse(file);
+		document.getDocumentElement().normalize();
+		
+		return document;
+	}
+	
+	public void load(String filePath) throws ParserConfigurationException, SAXException, IOException {
+		clear();
+		File file = new File(filePath);
+		Document document = parse(file);
+		NodeList list = document.getElementsByTagName(TASK_RESULT);
+		
+		for (int i = 0; i < list.getLength(); i++) {
+			
+		}
+	}
+}

@@ -1,0 +1,15 @@
+INDEX VERSION 1.127+/home/tpalys/Studia/sem6/bd2/proj/db2redis/.metadata/.plugins/org.eclipse.jdt.core
+2997392105.index
+1613587742.index
+805918453.index
+4239680721.index
+3554075184.index
+2369791033.index
+2017161270.index
+3877753652.index
+2943385179.index
+3388798820.index
+1338535131.index
+3217471935.index
+3647288732.index
+125578237.index

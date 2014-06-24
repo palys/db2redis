@@ -1,0 +1,10 @@
+package db2redis;
+
+public class Date {
+
+	private String day;
+	
+	private String mounth;
+	
+	private String year;
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;db2redis.Thread&apos; to &apos;ForumThread&apos;&#x0A;- Original project: &apos;db2redis&apos;&#x0A;- Original element: &apos;db2redis.Thread&apos;&#x0A;- Renamed element: &apos;db2redis.ForumThread&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;Thread&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;db2redis{Thread.java[Thread" matchStrategy="1" name="ForumThread" qualified="false" references="true" similarDeclarations="false" stamp="1403559703873" textual="false" version="1.0"/>
+</session>

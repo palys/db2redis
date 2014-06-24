@@ -1,0 +1,81 @@
+package db2redis;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import redis.clients.jedis.Jedis;
+
+public class Main {
+	
+	private DataReader reader = new DataReader();
+	
+	private Jedis jedis = new Jedis("127.0.0.1", 6379);
+	
+	private void insertUser(ForumUser user) {
+		Long id = jedis.incr("user_id");
+		String userKey = "user:" + id.toString();
+		jedis.hmset(userKey, user.getMap());
+		jedis.hset("users", user.getLogin(), id.toString());
+	}
+	
+	private void insertPost(ForumPost post) {  // FIXME
+		Long id = jedis.incr("post_id");
+		String postKey = "post:" + id.toString();
+		Map<String, String> map = post.getMap();
+		String userID = jedis.hget("users", post.getUser());
+		if (userID != null) {
+			map.put("user", userID);
+		}
+		jedis.hmset(postKey, map);
+	}
+	
+	private void insertThread(ForumThread thread) {
+		
+		Long id = jedis.incr("thread_id");
+		String threadKey = "thread:" + id.toString();
+	}
+	
+	private void insertData(Map<String, ForumThread> threads, List<ForumPost> posts, Map<String, ForumUser> users) {
+		
+		long begin = System.currentTimeMillis();
+		
+		for (ForumUser u : users.values()) {
+			insertUser(u);
+		}
+		
+		for (ForumThread t : threads.values()) {
+			insertThread(t);
+		}
+		
+		for (ForumPost p : posts) {
+			insertPost(p);
+		}
+		
+		long end = System.currentTimeMillis();
+		
+		System.out.println("Ładowanie danych zajęło: " + ((end - begin)/1000.) + "s");
+	}
+
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+		
+		Main main = new Main();
+		
+		long begin = System.currentTimeMillis();
+		main.reader.load("tolkien.xml");
+		long end = System.currentTimeMillis();
+		System.out.println("Wczytanie i parsowanie danych zajęło: " + ((end - begin)/1000.) + "s");
+		
+		main.insertData(main.reader.getThreads(), main.reader.getPosts(), main.reader.getUsers());
+
+		System.out.println(main.jedis.hget("user:1", "login"));
+		
+		main.jedis.close();
+	}
+
+}

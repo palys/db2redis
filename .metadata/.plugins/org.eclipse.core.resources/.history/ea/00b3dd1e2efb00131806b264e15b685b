@@ -1,0 +1,43 @@
+package db2redis;
+
+public class ForumThread {
+	
+	private String title;
+	
+	private long date;
+	
+	private String user;
+
+	public ForumThread(String title, long date, String user) {
+		super();
+		this.title = title;
+		this.date = date;
+		this.user = user;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public long getDate() {
+		return date;
+	}
+
+	public void setDate(long date) {
+		this.date = date;
+	}
+
+	public String getUser() {
+		return user;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+	
+	
+}

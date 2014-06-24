@@ -1,0 +1,43 @@
+package db2redis;
+
+public class Date {
+
+	private String day;
+	
+	private String mounth;
+	
+	private String year;
+
+	public Date(String day, String mounth, String year) {
+		super();
+		this.day = day;
+		this.mounth = mounth;
+		this.year = year;
+	}
+
+	public String getDay() {
+		return day;
+	}
+
+	public void setDay(String day) {
+		this.day = day;
+	}
+
+	public String getMounth() {
+		return mounth;
+	}
+
+	public void setMounth(String mounth) {
+		this.mounth = mounth;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+	
+	
+}

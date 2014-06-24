@@ -1,0 +1,23 @@
+package db2redis;
+
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import redis.clients.jedis.Jedis;
+
+public class Main {
+	
+	private DataReader reader = new DataReader();
+
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+		
+		Main main = new Main();
+		
+		main.reader.load("tolkien.xml");
+
+	}
+
+}
